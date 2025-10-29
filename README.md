@@ -20,23 +20,35 @@ A bash script that automatically detects your server control panel and changes t
 
 ## Usage
 
-Запустите одну из следующих команд:
+Основной способ запуска (рекомендуемый):
 
 **С использованием curl:**
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
 ```
 
 **С использованием wget:**
 ```bash
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
+```
+
+### Альтернативные способы (при необходимости)
+
+Если вы уже авторизованы как root на сервере:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
+```
+
+```bash
 bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
 ```
 
-**Преимущества такого подхода:**
-- Явный вызов интерпретатора `bash` — более прозрачно и безопасно
-- Удобно для аудита кода перед выполнением
-- Совместимость с нестандартными shell-интерпретаторами
-- Отсутствие необходимости в `sudo` внутри команды (выполняйте от root или с sudo перед bash)
+**Преимущества sudo подхода:**
+- Универсальность — работает из любой учетной записи
+- Безопасность — явное повышение привилегий
+- Удобство — не требует переключения пользователя
+- Аудит — четко видно, что команда требует root доступа
 
 ## How It Works
 1. The script checks if it's running with root privileges
@@ -52,7 +64,6 @@ Universal Control Panel Password Changer
 ==========================================
 Detected: HestiaCP
 ✓ Password changed successfully!
-
 Panel: HestiaCP
 Username: admin
 New Password: Ab3$xY9@mK2!pL5
