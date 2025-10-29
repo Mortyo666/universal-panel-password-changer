@@ -1,9 +1,7 @@
 # Universal Control Panel Password Changer
-
 A bash script that automatically detects your server control panel and changes the admin password to a randomly generated secure password.
 
 ## Supported Control Panels
-
 - **HestiaCP**
 - **VestaCP**
 - **FastPanel**
@@ -11,7 +9,6 @@ A bash script that automatically detects your server control panel and changes t
 - **ISPmanager**
 
 ## Features
-
 - Automatic control panel detection
 - Generates secure 15-character random passwords
 - Uses uppercase, lowercase, numbers, and special characters
@@ -19,25 +16,29 @@ A bash script that automatically detects your server control panel and changes t
 - Clear success/failure feedback
 
 ## Requirements
-
 ⚠️ **This script MUST be run as root**
 
 ## Usage
 
-Run this single command:
+Запустите одну из следующих команд:
 
+**С использованием curl:**
 ```bash
-curl -sSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh | sudo bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
 ```
 
-Alternatively, using wget:
-
+**С использованием wget:**
 ```bash
-wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh | sudo bash
+bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
 ```
+
+**Преимущества такого подхода:**
+- Явный вызов интерпретатора `bash` — более прозрачно и безопасно
+- Удобно для аудита кода перед выполнением
+- Совместимость с нестандартными shell-интерпретаторами
+- Отсутствие необходимости в `sudo` внутри команды (выполняйте от root или с sudo перед bash)
 
 ## How It Works
-
 1. The script checks if it's running with root privileges
 2. Automatically detects which control panel is installed
 3. Generates a random 15-character secure password
@@ -45,14 +46,11 @@ wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-c
 5. Displays the new credentials
 
 ## Output Example
-
 ```
 ==========================================
 Universal Control Panel Password Changer
 ==========================================
-
 Detected: HestiaCP
-
 ✓ Password changed successfully!
 
 Panel: HestiaCP
