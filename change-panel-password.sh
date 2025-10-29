@@ -1,23 +1,53 @@
 #!/bin/bash
 
+# ============================================
 # Universal Control Panel Password Changer
-# Generates random 15-character password and changes admin password
-# Supports: HestiaCP, VestaCP, FastPanel, aaPanel, ISPmanager
+# Version: 3.0
+# Author: GitHub @YOUR_USERNAME
+# ============================================
+# Features:
+# - Auto-detects control panels
+# - Finds custom ports automatically
+# - Generates secure 15-char passwords
+# - Supports: HestiaCP, VestaCP, FastPanel, aaPanel, ISPmanager
+# ============================================
 
-# Function to generate random 15-character password
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_success() { echo -e "${GREEN}✓${NC} $1"; }
+print_error() { echo -e "${RED}✗${NC} $1"; }
+print_info() { echo -e "${YELLOW}ℹ${NC} $1"; }
+
+# Generate secure random password
 generate_password() {
-    # Generate password with uppercase, lowercase, numbers and special characters
-    NEW_PASSWORD=$(tr -dc 'A-Za-z0-9!@#$%^&*()_+=' < /dev/urandom | head -c 15)
-    echo "$NEW_PASSWORD"
+    tr -dc 'A-Za-z0-9!@#$%^&*()-_=+' < /dev/urandom | head -c 15
 }
 
-# Function to detect control panel
+# Get server public IP
+get_server_ip() {
+    local ip
+    ip=$(curl -s --max-time 3 ifconfig.me 2>/dev/null || \
+         curl -s --max-time 3 icanhazip.com 2>/dev/null || \
+         curl -s --max-time 3 ipinfo.io/ip 2>/dev/null || \
+         hostname -I | awk '{print $1}')
+    echo "$ip"
+}
+
+# Detect installed control panel
 detect_panel() {
     if [ -d "/usr/local/hestia" ]; then
         echo "hestia"
     elif [ -d "/usr/local/vesta" ]; then
         echo "vesta"
-    elif [ -d "/usr/local/fastpanel" ]; then
+    elif [ -d "/usr/local/fastpanel" ] || [ -f "/usr/local/fastpanel/fastpanel" ]; then
         echo "fastpanel"
     elif [ -d "/www/server/panel" ]; then
         echo "aapanel"
@@ -28,125 +58,289 @@ detect_panel() {
     fi
 }
 
-# Function to change password based on panel type
+# Find actual listening port for service
+find_listening_port() {
+    local service_name=$1
+    local default_port=$2
+    
+    # Try multiple methods to find port
+    local port
+    
+    # Method 1: netstat
+    port=$(netstat -tlnp 2>/dev/null | grep "$service_name" | grep -oP ':\K[0-9]+' | head -1)
+    
+    # Method 2: ss command
+    if [ -z "$port" ]; then
+        port=$(ss -tlnp 2>/dev/null | grep "$service_name" | grep -oP ':\K[0-9]+' | head -1)
+    fi
+    
+    # Method 3: lsof
+    if [ -z "$port" ]; then
+        port=$(lsof -i -P -n 2>/dev/null | grep "$service_name" | grep LISTEN | grep -oP ':\K[0-9]+' | head -1)
+    fi
+    
+    # Fallback to default
+    if [ -z "$port" ]; then
+        port=$default_port
+    fi
+    
+    echo "$port"
+}
+
+# Get panel URL with auto port detection
+get_panel_url() {
+    local panel=$1
+    local ip=$2
+    local port
+    local url
+    
+    case $panel in
+        hestia)
+            # Try to read port from config
+            if [ -f "/usr/local/hestia/nginx/conf/nginx.conf" ]; then
+                port=$(grep -oP 'listen\s+\K[0-9]+' /usr/local/hestia/nginx/conf/nginx.conf | head -1)
+            fi
+            # Fallback: find actual listening port
+            if [ -z "$port" ]; then
+                port=$(find_listening_port "hestia" "8083")
+            fi
+            url="https://${ip}:${port}"
+            ;;
+            
+        vesta)
+            # Try to read port from config
+            if [ -f "/usr/local/vesta/nginx/conf/nginx.conf" ]; then
+                port=$(grep -oP 'listen\s+\K[0-9]+' /usr/local/vesta/nginx/conf/nginx.conf | head -1)
+            fi
+            # Fallback: find actual listening port
+            if [ -z "$port" ]; then
+                port=$(find_listening_port "vesta" "8083")
+            fi
+            url="https://${ip}:${port}"
+            ;;
+            
+        fastpanel)
+            # FastPanel usually on 8888
+            port=$(find_listening_port "fastpanel" "8888")
+            url="https://${ip}:${port}"
+            ;;
+            
+        aapanel)
+            # Read custom port from config
+            if [ -f "/www/server/panel/data/port.pl" ]; then
+                port=$(cat /www/server/panel/data/port.pl)
+            else
+                port=$(find_listening_port "BT-Panel" "7800")
+            fi
+            
+            # Check for security entrance path
+            local security_path=""
+            if [ -f "/www/server/panel/data/admin_path.pl" ]; then
+                security_path=$(cat /www/server/panel/data/admin_path.pl)
+            fi
+            
+            if [ -n "$security_path" ]; then
+                url="http://${ip}:${port}${security_path}"
+            else
+                url="http://${ip}:${port}"
+            fi
+            ;;
+            
+        ispmanager)
+            # ISPmanager on port 1500
+            port=$(find_listening_port "ispmgr" "1500")
+            url="https://${ip}:${port}"
+            ;;
+            
+        *)
+            url=""
+            ;;
+    esac
+    
+    echo "$url"
+}
+
+# Change password for detected panel
 change_password() {
     local panel=$1
     local password=$2
     
     case $panel in
         hestia)
-            echo "Detected: HestiaCP"
-            /usr/local/hestia/bin/v-change-user-password admin "$password"
-            if [ $? -eq 0 ]; then
-                echo "✓ Password changed successfully!"
-                echo "Panel: HestiaCP"
-                echo "Username: admin"
-                echo "New Password: $password"
+            print_info "Changing HestiaCP admin password..."
+            if /usr/local/hestia/bin/v-change-user-password admin "$password" >/dev/null 2>&1; then
                 return 0
             else
-                echo "✗ Failed to change password for HestiaCP"
                 return 1
             fi
             ;;
             
         vesta)
-            echo "Detected: VestaCP"
-            /usr/local/vesta/bin/v-change-user-password admin "$password"
-            if [ $? -eq 0 ]; then
-                echo "✓ Password changed successfully!"
-                echo "Panel: VestaCP"
-                echo "Username: admin"
-                echo "New Password: $password"
+            print_info "Changing VestaCP admin password..."
+            if /usr/local/vesta/bin/v-change-user-password admin "$password" >/dev/null 2>&1; then
                 return 0
             else
-                echo "✗ Failed to change password for VestaCP"
                 return 1
             fi
             ;;
             
         fastpanel)
-            echo "Detected: FastPanel"
-            echo -e "$password\n$password" | passwd fastuser
-            if [ $? -eq 0 ]; then
-                echo "✓ Password changed successfully!"
-                echo "Panel: FastPanel"
-                echo "Username: fastuser"
-                echo "New Password: $password"
-                return 0
-            else
-                echo "✗ Failed to change password for FastPanel"
-                return 1
+            print_info "Changing FastPanel password..."
+            if [ -f "/usr/local/fastpanel/fastpanel" ]; then
+                if /usr/local/fastpanel/fastpanel set --password="$password" >/dev/null 2>&1; then
+                    return 0
+                fi
             fi
+            # Alternative method
+            if echo "$password" | /usr/local/fastpanel/admin.sh password >/dev/null 2>&1; then
+                return 0
+            fi
+            return 1
             ;;
             
         aapanel)
-            echo "Detected: aaPanel"
-            cd /www/server/panel
-            echo "$password" | python tools.py panel "$password"
-            if [ $? -eq 0 ]; then
-                echo "✓ Password changed successfully!"
-                echo "Panel: aaPanel"
-                echo "Username: (current username)"
-                echo "New Password: $password"
+            print_info "Changing aaPanel password..."
+            cd /www/server/panel || return 1
+            if echo "$password" | python tools.py panel "$password" >/dev/null 2>&1; then
                 return 0
             else
-                echo "✗ Failed to change password for aaPanel"
                 return 1
             fi
             ;;
             
         ispmanager)
-            echo "Detected: ISPmanager"
-            echo -e "$password\n$password" | passwd root
-            if [ $? -eq 0 ]; then
-                echo "✓ Password changed successfully!"
-                echo "Panel: ISPmanager"
-                echo "Username: root"
-                echo "New Password: $password"
+            print_info "Changing ISPmanager password..."
+            local username=""
+            
+            # Try ISPmanager 6 (admin user)
+            if /usr/local/mgr5/sbin/mgrctl -m ispmgr user.edit name=admin passwd="$password" confirm="$password" >/dev/null 2>&1; then
+                username="admin"
                 return 0
-            else
-                echo "✗ Failed to change password for ISPmanager"
-                return 1
             fi
+            
+            # Try ISPmanager 5 (root user)
+            if /usr/local/mgr5/sbin/mgrctl -m ispmgr user.edit name=root passwd="$password" confirm="$password" >/dev/null 2>&1; then
+                username="root"
+                return 0
+            fi
+            
+            return 1
             ;;
             
-        unknown)
-            echo "✗ No supported control panel detected"
-            echo "Supported panels: HestiaCP, VestaCP, FastPanel, aaPanel, ISPmanager"
+        *)
             return 1
             ;;
     esac
 }
 
+# Get username for panel
+get_panel_username() {
+    local panel=$1
+    
+    case $panel in
+        hestia|vesta)
+            echo "admin"
+            ;;
+        fastpanel)
+            echo "admin"
+            ;;
+        aapanel)
+            echo "admin"
+            ;;
+        ispmanager)
+            # Check version
+            if /usr/local/mgr5/sbin/mgrctl -m ispmgr user 2>/dev/null | grep -q "admin"; then
+                echo "admin"
+            else
+                echo "root"
+            fi
+            ;;
+        *)
+            echo "admin"
+            ;;
+    esac
+}
+
+# Get panel name for display
+get_panel_name() {
+    local panel=$1
+    case $panel in
+        hestia) echo "HestiaCP" ;;
+        vesta) echo "VestaCP" ;;
+        fastpanel) echo "FastPanel" ;;
+        aapanel) echo "aaPanel" ;;
+        ispmanager) echo "ISPmanager" ;;
+        *) echo "Unknown" ;;
+    esac
+}
+
 # Main execution
 main() {
-    echo "=========================================="
-    echo "Universal Control Panel Password Changer"
-    echo "=========================================="
+    echo "╔════════════════════════════════════════╗"
+    echo "║  Control Panel Password Changer v3.0  ║"
+    echo "╚════════════════════════════════════════╝"
     echo ""
     
-    # Check if running as root
+    # Check root privileges
     if [ "$EUID" -ne 0 ]; then
-        echo "✗ This script must be run as root"
+        print_error "This script must be run as root (use sudo)"
         exit 1
     fi
     
     # Detect panel
+    print_info "Detecting control panel..."
     PANEL=$(detect_panel)
     
     if [ "$PANEL" = "unknown" ]; then
-        echo "✗ No supported control panel found"
+        print_error "No supported control panel detected"
+        echo ""
+        echo "Supported: HestiaCP, VestaCP, FastPanel, aaPanel, ISPmanager"
         exit 1
     fi
     
+    PANEL_NAME=$(get_panel_name "$PANEL")
+    print_success "Detected: $PANEL_NAME"
+    echo ""
+    
     # Generate password
+    print_info "Generating secure password..."
     PASSWORD=$(generate_password)
+    print_success "Password generated"
+    echo ""
     
     # Change password
-    change_password "$PANEL" "$PASSWORD"
-    
-    echo ""
-    echo "=========================================="
+    if change_password "$PANEL" "$PASSWORD"; then
+        print_success "Password changed successfully!"
+        echo ""
+        
+        # Get server IP and panel info
+        SERVER_IP=$(get_server_ip)
+        PANEL_URL=$(get_panel_url "$PANEL" "$SERVER_IP")
+        USERNAME=$(get_panel_username "$PANEL")
+        
+        # Display results - КОМПАКТНО И КРАСИВО
+        echo "┌────────────────────────────────────────┐"
+        echo "│              CREDENTIALS               │"
+        echo "├────────────────────────────────────────┤"
+        echo "│ Panel:    $PANEL_NAME"
+        
+        # Показываем URL только если найден
+        if [ -n "$PANEL_URL" ] && [ -n "$SERVER_IP" ]; then
+            echo "│ URL:      $PANEL_URL"
+        fi
+        
+        echo "│ Username: $USERNAME"
+        echo "│ Password: $PASSWORD"
+        echo "└────────────────────────────────────────┘"
+        echo ""
+        print_success "Save these credentials securely!"
+        
+    else
+        echo ""
+        print_error "Failed to change password"
+        print_info "Please check if the panel is properly installed"
+        exit 1
+    fi
 }
 
 # Run main function
