@@ -1,9 +1,7 @@
 # Universal Control Panel Password Changer
-
 A bash script that automatically detects your server control panel and changes the admin password to a randomly generated secure password.
 
 ## Supported Control Panels
-
 - **HestiaCP**
 - **VestaCP**
 - **FastPanel**
@@ -11,7 +9,6 @@ A bash script that automatically detects your server control panel and changes t
 - **ISPmanager**
 
 ## Features
-
 - Automatic control panel detection
 - Generates secure 15-character random passwords
 - Uses uppercase, lowercase, numbers, and special characters
@@ -19,21 +16,110 @@ A bash script that automatically detects your server control panel and changes t
 - Clear success/failure feedback
 
 ## Requirements
-
 ⚠️ **This script MUST be run as root**
+
+## Usage (English)
+
+### Primary Launch Method (Recommended)
+
+**Using curl:**
+```bash
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
+```
+
+**Using wget:**
+```bash
+sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
+```
+
+### Alternative Methods (If Needed)
+
+If you are already logged in as root on the server:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
+```
+
+```bash
+bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
+```
+
+### Step-by-Step Instructions
+
+1. Copy one of the commands above
+2. Paste it into your server's terminal
+3. Press Enter
+4. The script will automatically detect the control panel
+5. The password will be changed automatically
+6. Save the new credentials in a secure location
+
+### Typical Output
+
+**Example output (URL found):**
+```
+╔════════════════════════════════════════╗
+║  Control Panel Password Changer v3.0  ║
+╚════════════════════════════════════════╝
+
+ℹ Detecting control panel...
+✓ Detected: HestiaCP
+
+ℹ Generating secure password...
+✓ Password generated
+
+ℹ Changing HestiaCP admin password...
+✓ Password changed successfully!
+
+┌────────────────────────────────────────┐
+│              CREDENTIALS               │
+├────────────────────────────────────────┤
+│ Panel:    HestiaCP
+│ URL:      https://192.168.1.100:8083
+│ Username: admin
+│ Password: Xy8#mK2@pL9-vR4
+└────────────────────────────────────────┘
+
+✓ Save these credentials securely!
+```
+
+**Example output (URL not found):**
+```
+┌────────────────────────────────────────┐
+│              CREDENTIALS               │
+├────────────────────────────────────────┤
+│ Panel:    FastPanel
+│ Username: admin
+│ Password: Km9$pL2@vR8-Xy4
+└────────────────────────────────────────┘
+
+✓ Save these credentials securely!
+```
+
+### Benefits of the sudo Approach
+
+- **Universal** — works from any user account
+- **Secure** — explicit privilege elevation
+- **Convenient** — no need to switch users
+- **Auditable** — clearly shows the command requires root access
+
+### Important Notes
+
+- The script automatically detects the installed control panel
+- A secure random password of 15 characters is generated
+- Uses uppercase, lowercase letters, numbers, and special characters
+- New credentials are displayed immediately after execution
+- Make sure to save the new password in a secure location
 
 ## Использование (русский)
 
 ### Основной способ запуска (рекомендуемый)
 
 **С использованием curl:**
-
 ```bash
 sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
 ```
 
 **С использованием wget:**
-
 ```bash
 sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
 ```
@@ -62,21 +148,22 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 ### Типичный вывод
 
 **Пример вывода (URL найден):**
-
 ```
 ╔════════════════════════════════════════╗
 ║  Control Panel Password Changer v3.0  ║
 ╚════════════════════════════════════════╝
 
 ℹ Обнаружение панели управления...
-✓ Обнаружена: HestiaCP
+✓ Обнаружено: HestiaCP
+
 ℹ Генерация безопасного пароля...
 ✓ Пароль сгенерирован
+
 ℹ Изменение пароля администратора HestiaCP...
 ✓ Пароль успешно изменён!
 
 ┌────────────────────────────────────────┐
-│           УЧЁТНЫЕ ДАННЫЕ               │
+│              УЧЁТНЫЕ ДАННЫЕ            │
 ├────────────────────────────────────────┤
 │ Панель:   HestiaCP
 │ URL:      https://192.168.1.100:8083
@@ -88,10 +175,9 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 ```
 
 **Пример вывода (URL не найден):**
-
 ```
 ┌────────────────────────────────────────┐
-│           УЧЁТНЫЕ ДАННЫЕ               │
+│              УЧЁТНЫЕ ДАННЫЕ            │
 ├────────────────────────────────────────┤
 │ Панель:   FastPanel
 │ Логин:    admin
@@ -101,114 +187,20 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 ✓ Сохраните эти учётные данные в безопасном месте!
 ```
 
-### Преимущества sudo подхода
+### Преимущества использования sudo
 
-- **Универсальность** — работает из любой учётной записи
+- **Универсальность** — работает из любой учётной записи пользователя
 - **Безопасность** — явное повышение привилегий
-- **Удобство** — не требует переключения пользователя
-- **Аудит** — чётко видно, что команда требует root доступа
+- **Удобство** — нет необходимости переключаться между пользователями
+- **Аудитируемость** — чётко показывает, что команда требует прав root
 
-### Важные пояснения
+### Важные замечания
 
 - Скрипт автоматически определяет установленную панель управления
 - Генерируется безопасный случайный пароль длиной 15 символов
-- Используются прописные и строчные буквы, цифры и специальные символы
+- Используются заглавные и строчные буквы, цифры и специальные символы
 - Новые учётные данные отображаются сразу после выполнения
 - Обязательно сохраните новый пароль в безопасном месте
-
-## Usage (English)
-
-### Primary Method (Recommended)
-
-**Using curl:**
-
-```bash
-sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
-```
-
-**Using wget:**
-
-```bash
-sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
-```
-
-### Alternative Methods (If Needed)
-
-If you are already logged in as root on the server:
-
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
-```
-
-```bash
-bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh)"
-```
-
-### Step-by-Step Instructions
-
-1. Copy one of the commands above
-2. Paste it into your server terminal
-3. Press Enter
-4. The script will automatically detect your control panel
-5. The password will be changed automatically
-6. Save the new credentials in a secure location
-
-### Typical Output
-
-**Example output (URL found):**
-
-```
-╔════════════════════════════════════════╗
-║  Control Panel Password Changer v3.0  ║
-╚════════════════════════════════════════╝
-
-ℹ Detecting control panel...
-✓ Detected: HestiaCP
-ℹ Generating secure password...
-✓ Password generated
-ℹ Changing HestiaCP admin password...
-✓ Password changed successfully!
-
-┌────────────────────────────────────────┐
-│              CREDENTIALS               │
-├────────────────────────────────────────┤
-│ Panel:    HestiaCP
-│ URL:      https://192.168.1.100:8083
-│ Username: admin
-│ Password: Xy8#mK2@pL9-vR4
-└────────────────────────────────────────┘
-
-✓ Save these credentials securely!
-```
-
-**Example output (URL not found):**
-
-```
-┌────────────────────────────────────────┐
-│              CREDENTIALS               │
-├────────────────────────────────────────┤
-│ Panel:    FastPanel
-│ Username: admin
-│ Password: Km9$pL2@vR8-Xy4
-└────────────────────────────────────────┘
-
-✓ Save these credentials securely!
-```
-
-### Benefits of the sudo Approach
-
-- **Universal** — works from any user account
-- **Secure** — explicit privilege elevation
-- **Convenient** — no need to switch users
-- **Auditable** — clearly shows the command requires root access
-
-### Important Notes
-
-- The script automatically detects the installed control panel
-- A secure random password of 15 characters is generated
-- Uses uppercase, lowercase letters, numbers, and special characters
-- New credentials are displayed immediately after execution
-- Make sure to save the new password in a secure location
 
 ## How It Works
 
