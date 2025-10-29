@@ -93,13 +93,6 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 
 ✓ Save these credentials securely!
 ```
-### Important Notes
-
-- The script automatically detects the installed control panel
-- A secure random password of 15 characters is generated
-- Uses uppercase, lowercase letters, numbers, and special characters
-- New credentials are displayed immediately after execution
-- Make sure to save the new password in a secure location
 
 ## Использование (русский)
 
@@ -183,4 +176,3 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 - Генерируется безопасный случайный пароль длиной 15 символов
 - Используются заглавные и строчные буквы, цифры и специальные символы
 - Новые учётные данные отображаются сразу после выполнения
-- Обязательно сохраните новый пароль в безопасном месте
