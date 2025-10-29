@@ -24,19 +24,16 @@ A bash script that automatically detects your server control panel and changes t
 
 ## Usage
 
-1. Download the script:
+Run this single command:
+
 ```bash
-wget https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh
+curl -sSL https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh | sudo bash
 ```
 
-2. Make it executable:
-```bash
-chmod +x change-panel-password.sh
-```
+Alternatively, using wget:
 
-3. Run as root:
 ```bash
-sudo ./change-panel-password.sh
+wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel-password-changer/main/change-panel-password.sh | sudo bash
 ```
 
 ## How It Works
@@ -55,36 +52,10 @@ Universal Control Panel Password Changer
 ==========================================
 
 Detected: HestiaCP
+
 ✓ Password changed successfully!
+
 Panel: HestiaCP
 Username: admin
 New Password: Ab3$xY9@mK2!pL5
-
 ==========================================
-```
-
-## Security Notes
-
-- Always run this script in a secure environment
-- Save the generated password immediately
-- The password is displayed only once
-- Generated passwords include special characters for enhanced security
-
-## Default Usernames by Panel
-
-- **HestiaCP**: admin
-- **VestaCP**: admin
-- **FastPanel**: fastuser
-- **aaPanel**: (current username)
-- **ISPmanager**: root
-
-## Troubleshooting
-
-If the script doesn't detect your panel:
-- Ensure the panel is properly installed
-- Verify you're running the script as root
-- Check that the panel's installation directory exists
-
-## License
-
-MIT License - Feel free to use and modify
