@@ -51,7 +51,6 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 3. Press Enter
 4. The script will automatically detect the control panel
 5. The password will be changed automatically
-6. Save the new credentials in a secure location
 
 ### Typical Output
 
@@ -94,14 +93,6 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 
 ✓ Save these credentials securely!
 ```
-
-### Benefits of the sudo Approach
-
-- **Universal** — works from any user account
-- **Secure** — explicit privilege elevation
-- **Convenient** — no need to switch users
-- **Auditable** — clearly shows the command requires root access
-
 ### Important Notes
 
 - The script automatically detects the installed control panel
@@ -143,7 +134,6 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 3. Нажмите Enter
 4. Скрипт автоматически определит панель управления
 5. Пароль будет изменён автоматически
-6. Сохраните новые учётные данные в безопасном месте
 
 ### Типичный вывод
 
@@ -187,13 +177,6 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 ✓ Сохраните эти учётные данные в безопасном месте!
 ```
 
-### Преимущества использования sudo
-
-- **Универсальность** — работает из любой учётной записи пользователя
-- **Безопасность** — явное повышение привилегий
-- **Удобство** — нет необходимости переключаться между пользователями
-- **Аудитируемость** — чётко показывает, что команда требует прав root
-
 ### Важные замечания
 
 - Скрипт автоматически определяет установленную панель управления
@@ -201,11 +184,3 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 - Используются заглавные и строчные буквы, цифры и специальные символы
 - Новые учётные данные отображаются сразу после выполнения
 - Обязательно сохраните новый пароль в безопасном месте
-
-## How It Works
-
-1. The script checks if it's running with root privileges
-2. Automatically detects which control panel is installed
-3. Generates a random 15-character secure password
-4. Changes the admin password using the panel's native command
-5. Displays the new credentials
