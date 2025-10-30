@@ -1,5 +1,4 @@
 # Universal Control Panel Password Changer
-
 A bash script that automatically detects your server control panel and changes the admin password to a randomly generated secure password.
 
 ## Supported Control Panels
@@ -12,6 +11,8 @@ A bash script that automatically detects your server control panel and changes t
 - **ISPmanager**
 
 > The script correctly detects both FastPanel versions (FastPanel and FastPanel2) and applies the appropriate password change method for each.
+>
+> **FastPanel2 Note:** For FastPanel2 password changes, the script uses the built-in `chpasswd` command (`/usr/local/fastpanel2/fastpanel chpasswd --username=admin --password="..."`), which is guaranteed to work on modern FastPanel2 installations. This ensures maximum compatibility and reliability on new servers.
 
 ## Features
 
@@ -64,7 +65,6 @@ bash -c "$(wget -qO- https://raw.githubusercontent.com/Mortyo666/universal-panel
 ### Typical Output
 
 **Example output (URL found):**
-
 ```
 ╔════════════════════════════════════════╗
 ║  Control Panel Password Changer v3.1  ║
