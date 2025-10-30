@@ -1,36 +1,30 @@
 #!/bin/bash
-
 # ============================================
 # Universal Control Panel Password Changer
-# Version: 3.0
+# Version: 3.1
 # Author: GitHub @YOUR_USERNAME
 # ============================================
 # Features:
 # - Auto-detects control panels
 # - Finds custom ports automatically
 # - Generates secure 15-char passwords
-# - Supports: HestiaCP, VestaCP, FastPanel, aaPanel, ISPmanager
+# - Supports: HestiaCP, VestaCP, FastPanel, FastPanel2, aaPanel, ISPmanager
 # ============================================
-
 set -e
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
-
 # Function to print colored output
 print_success() { echo -e "${GREEN}✓${NC} $1"; }
 print_error() { echo -e "${RED}✗${NC} $1"; }
 print_info() { echo -e "${YELLOW}ℹ${NC} $1"; }
-
 # Generate secure random password
 generate_password() {
     tr -dc 'A-Za-z0-9!@#$%^&*()-_=+' < /dev/urandom | head -c 15
 }
-
 # Get server public IP
 get_server_ip() {
     local ip
@@ -40,13 +34,14 @@ get_server_ip() {
          hostname -I | awk '{print $1}')
     echo "$ip"
 }
-
 # Detect installed control panel
 detect_panel() {
     if [ -d "/usr/local/hestia" ]; then
         echo "hestia"
     elif [ -d "/usr/local/vesta" ]; then
         echo "vesta"
+    elif [ -d "/usr/local/fastpanel2" ] || [ -f "/usr/local/fastpanel2/fastpanel" ] || [ -f "/usr/local/fastpanel2-nginx/settings/fastpanel.conf" ]; then
+        echo "fastpanel2"
     elif [ -d "/usr/local/fastpanel" ] || [ -f "/usr/local/fastpanel/fastpanel" ]; then
         echo "fastpanel"
     elif [ -d "/www/server/panel" ]; then
@@ -57,7 +52,6 @@ detect_panel() {
         echo "unknown"
     fi
 }
-
 # Find actual listening port for service
 find_listening_port() {
     local service_name=$1
@@ -86,7 +80,6 @@ find_listening_port() {
     
     echo "$port"
 }
-
 # Get panel URL with auto port detection
 get_panel_url() {
     local panel=$1
@@ -116,6 +109,12 @@ get_panel_url() {
             if [ -z "$port" ]; then
                 port=$(find_listening_port "vesta" "8083")
             fi
+            url="https://${ip}:${port}"
+            ;;
+            
+        fastpanel2)
+            # FastPanel2 usually on 8888
+            port=$(find_listening_port "fastpanel" "8888")
             url="https://${ip}:${port}"
             ;;
             
@@ -159,7 +158,6 @@ get_panel_url() {
     
     echo "$url"
 }
-
 # Change password for detected panel
 change_password() {
     local panel=$1
@@ -182,6 +180,20 @@ change_password() {
             else
                 return 1
             fi
+            ;;
+            
+        fastpanel2)
+            print_info "Changing FastPanel2 password..."
+            if [ -f "/usr/local/fastpanel2/fastpanel" ]; then
+                if /usr/local/fastpanel2/fastpanel set --password="$password" >/dev/null 2>&1; then
+                    return 0
+                fi
+            fi
+            # Alternative method
+            if echo "$password" | /usr/local/fastpanel2/admin.sh password >/dev/null 2>&1; then
+                return 0
+            fi
+            return 1
             ;;
             
         fastpanel)
@@ -232,7 +244,6 @@ change_password() {
             ;;
     esac
 }
-
 # Get username for panel
 get_panel_username() {
     local panel=$1
@@ -241,7 +252,7 @@ get_panel_username() {
         hestia|vesta)
             echo "admin"
             ;;
-        fastpanel)
+        fastpanel2|fastpanel)
             echo "admin"
             ;;
         aapanel)
@@ -260,24 +271,23 @@ get_panel_username() {
             ;;
     esac
 }
-
 # Get panel name for display
 get_panel_name() {
     local panel=$1
     case $panel in
         hestia) echo "HestiaCP" ;;
         vesta) echo "VestaCP" ;;
+        fastpanel2) echo "FastPanel2" ;;
         fastpanel) echo "FastPanel" ;;
         aapanel) echo "aaPanel" ;;
         ispmanager) echo "ISPmanager" ;;
         *) echo "Unknown" ;;
     esac
 }
-
 # Main execution
 main() {
     echo "╔════════════════════════════════════════╗"
-    echo "║  Control Panel Password Changer v3.0  ║"
+    echo "║  Control Panel Password Changer v3.1  ║"
     echo "╚════════════════════════════════════════╝"
     echo ""
     
@@ -294,7 +304,7 @@ main() {
     if [ "$PANEL" = "unknown" ]; then
         print_error "No supported control panel detected"
         echo ""
-        echo "Supported: HestiaCP, VestaCP, FastPanel, aaPanel, ISPmanager"
+        echo "Supported: HestiaCP, VestaCP, FastPanel, FastPanel2, aaPanel, ISPmanager"
         exit 1
     fi
     
@@ -342,6 +352,5 @@ main() {
         exit 1
     fi
 }
-
 # Run main function
 main
