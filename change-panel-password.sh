@@ -184,7 +184,10 @@ change_password() {
             
         fastpanel2)
             print_info "Changing FastPanel2 password..."
-            if /usr/local/fastpanel2/fastpanel chpasswd --username=admin --password="$password" >/dev/null 2>&1; then
+            # Auto-detect FastPanel2 username (fastuser or admin)
+            local fp2_user
+            fp2_user=$(/usr/local/fastpanel2/fastpanel users list | grep -E 'fastuser|admin' | head -1)
+            if /usr/local/fastpanel2/fastpanel chpasswd --username="$fp2_user" --password="$password" >/dev/null 2>&1; then
                 return 0
             fi
             if [ -f "/usr/local/fastpanel2/fastpanel" ]; then
@@ -255,7 +258,11 @@ get_panel_username() {
         hestia|vesta)
             echo "admin"
             ;;
-        fastpanel2|fastpanel)
+        fastpanel2)
+            # Default FastPanel2 username is fastuser
+            echo "fastuser"
+            ;;
+        fastpanel)
             echo "admin"
             ;;
         aapanel)
