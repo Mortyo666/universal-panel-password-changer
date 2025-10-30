@@ -184,6 +184,9 @@ change_password() {
             
         fastpanel2)
             print_info "Changing FastPanel2 password..."
+            if /usr/local/fastpanel2/fastpanel chpasswd --username=admin --password="$password" >/dev/null 2>&1; then
+                return 0
+            fi
             if [ -f "/usr/local/fastpanel2/fastpanel" ]; then
                 if /usr/local/fastpanel2/fastpanel set --password="$password" >/dev/null 2>&1; then
                     return 0
