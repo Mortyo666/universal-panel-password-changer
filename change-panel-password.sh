@@ -89,80 +89,61 @@ get_panel_url() {
     
     case $panel in
         hestia)
-            # Try to read port from config
             if [ -f "/usr/local/hestia/nginx/conf/nginx.conf" ]; then
                 port=$(grep -oP 'listen\s+\K[0-9]+' /usr/local/hestia/nginx/conf/nginx.conf | head -1)
             fi
-            # Fallback: find actual listening port
             if [ -z "$port" ]; then
                 port=$(find_listening_port "hestia" "8083")
             fi
             url="https://${ip}:${port}"
             ;;
-            
         vesta)
-            # Try to read port from config
             if [ -f "/usr/local/vesta/nginx/conf/nginx.conf" ]; then
                 port=$(grep -oP 'listen\s+\K[0-9]+' /usr/local/vesta/nginx/conf/nginx.conf | head -1)
             fi
-            # Fallback: find actual listening port
             if [ -z "$port" ]; then
                 port=$(find_listening_port "vesta" "8083")
             fi
             url="https://${ip}:${port}"
             ;;
-            
         fastpanel2)
-            # FastPanel2 usually on 8888
             port=$(find_listening_port "fastpanel" "8888")
             url="https://${ip}:${port}"
             ;;
-            
         fastpanel)
-            # FastPanel usually on 8888
             port=$(find_listening_port "fastpanel" "8888")
             url="https://${ip}:${port}"
             ;;
-            
         aapanel)
-            # Read custom port from config
             if [ -f "/www/server/panel/data/port.pl" ]; then
                 port=$(cat /www/server/panel/data/port.pl)
             else
                 port=$(find_listening_port "BT-Panel" "7800")
             fi
-            
-            # Check for security entrance path
             local security_path=""
             if [ -f "/www/server/panel/data/admin_path.pl" ]; then
                 security_path=$(cat /www/server/panel/data/admin_path.pl)
             fi
-            
             if [ -n "$security_path" ]; then
                 url="http://${ip}:${port}${security_path}"
             else
                 url="http://${ip}:${port}"
             fi
             ;;
-            
         ispmanager)
-            # ISPmanager on port 1500
             port=$(find_listening_port "ispmgr" "1500")
             url="https://${ip}:${port}"
             ;;
-            
         *)
             url=""
             ;;
     esac
-    
     echo "$url"
 }
 # Change password for detected panel
 change_password() {
     local panel=$1
     local password=$2
-    
     case $panel in
         hestia)
             print_info "Changing HestiaCP admin password..."
@@ -172,7 +153,6 @@ change_password() {
                 return 1
             fi
             ;;
-            
         vesta)
             print_info "Changing VestaCP admin password..."
             if /usr/local/vesta/bin/v-change-user-password admin "$password" >/dev/null 2>&1; then
@@ -181,27 +161,21 @@ change_password() {
                 return 1
             fi
             ;;
-            
         fastpanel2)
             print_info "Changing FastPanel2 password..."
-            # Auto-detect FastPanel2 username (fastuser or admin)
+            # Determine FastPanel2 username via users list, fallback to fastuser
             local fp2_user
-            fp2_user=$(/usr/local/fastpanel2/fastpanel users list | grep -E 'fastuser|admin' | head -1)
-            if /usr/local/fastpanel2/fastpanel chpasswd --username="$fp2_user" --password="$password" >/dev/null 2>&1; then
-                return 0
+            if command -v /usr/local/fastpanel2/fastpanel >/dev/null 2>&1; then
+                fp2_user=$(/usr/local/fastpanel2/fastpanel users list 2>/dev/null | grep -Eo '^(fastuser|admin)$' | head -1)
             fi
-            if [ -f "/usr/local/fastpanel2/fastpanel" ]; then
-                if /usr/local/fastpanel2/fastpanel set --password="$password" >/dev/null 2>&1; then
-                    return 0
-                fi
+            if [ -z "$fp2_user" ]; then
+                fp2_user="fastuser"
             fi
-            # Alternative method
-            if echo "$password" | /usr/local/fastpanel2/admin.sh password >/dev/null 2>&1; then
+            if echo "$fp2_user:$password" | chpasswd >/dev/null 2>&1; then
                 return 0
             fi
             return 1
             ;;
-            
         fastpanel)
             print_info "Changing FastPanel password..."
             if [ -f "/usr/local/fastpanel/fastpanel" ]; then
@@ -209,13 +183,11 @@ change_password() {
                     return 0
                 fi
             fi
-            # Alternative method
             if echo "$password" | /usr/local/fastpanel/admin.sh password >/dev/null 2>&1; then
                 return 0
             fi
             return 1
             ;;
-            
         aapanel)
             print_info "Changing aaPanel password..."
             cd /www/server/panel || return 1
@@ -225,26 +197,19 @@ change_password() {
                 return 1
             fi
             ;;
-            
         ispmanager)
             print_info "Changing ISPmanager password..."
             local username=""
-            
-            # Try ISPmanager 6 (admin user)
             if /usr/local/mgr5/sbin/mgrctl -m ispmgr user.edit name=admin passwd="$password" confirm="$password" >/dev/null 2>&1; then
                 username="admin"
                 return 0
             fi
-            
-            # Try ISPmanager 5 (root user)
             if /usr/local/mgr5/sbin/mgrctl -m ispmgr user.edit name=root passwd="$password" confirm="$password" >/dev/null 2>&1; then
                 username="root"
                 return 0
             fi
-            
             return 1
             ;;
-            
         *)
             return 1
             ;;
@@ -253,13 +218,11 @@ change_password() {
 # Get username for panel
 get_panel_username() {
     local panel=$1
-    
     case $panel in
         hestia|vesta)
             echo "admin"
             ;;
         fastpanel2)
-            # Default FastPanel2 username is fastuser
             echo "fastuser"
             ;;
         fastpanel)
@@ -269,7 +232,6 @@ get_panel_username() {
             echo "admin"
             ;;
         ispmanager)
-            # Check version
             if /usr/local/mgr5/sbin/mgrctl -m ispmgr user 2>/dev/null | grep -q "admin"; then
                 echo "admin"
             else
@@ -300,61 +262,43 @@ main() {
     echo "║  Control Panel Password Changer v3.1  ║"
     echo "╚════════════════════════════════════════╝"
     echo ""
-    
-    # Check root privileges
     if [ "$EUID" -ne 0 ]; then
         print_error "This script must be run as root (use sudo)"
         exit 1
     fi
-    
-    # Detect panel
     print_info "Detecting control panel..."
     PANEL=$(detect_panel)
-    
     if [ "$PANEL" = "unknown" ]; then
         print_error "No supported control panel detected"
         echo ""
         echo "Supported: HestiaCP, VestaCP, FastPanel, FastPanel2, aaPanel, ISPmanager"
         exit 1
     fi
-    
     PANEL_NAME=$(get_panel_name "$PANEL")
     print_success "Detected: $PANEL_NAME"
     echo ""
-    
-    # Generate password
     print_info "Generating secure password..."
     PASSWORD=$(generate_password)
     print_success "Password generated"
     echo ""
-    
-    # Change password
     if change_password "$PANEL" "$PASSWORD"; then
         print_success "Password changed successfully!"
         echo ""
-        
-        # Get server IP and panel info
         SERVER_IP=$(get_server_ip)
         PANEL_URL=$(get_panel_url "$PANEL" "$SERVER_IP")
         USERNAME=$(get_panel_username "$PANEL")
-        
-        # Display results - КОМПАКТНО И КРАСИВО
         echo "┌────────────────────────────────────────┐"
         echo "│              CREDENTIALS               │"
         echo "├────────────────────────────────────────┤"
         echo "│ Panel:    $PANEL_NAME"
-        
-        # Показываем URL только если найден
         if [ -n "$PANEL_URL" ] && [ -n "$SERVER_IP" ]; then
             echo "│ URL:      $PANEL_URL"
         fi
-        
         echo "│ Username: $USERNAME"
         echo "│ Password: $PASSWORD"
         echo "└────────────────────────────────────────┘"
         echo ""
         print_success "Save these credentials securely!"
-        
     else
         echo ""
         print_error "Failed to change password"
